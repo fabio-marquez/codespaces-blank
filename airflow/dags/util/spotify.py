@@ -18,11 +18,10 @@ class SpotifyAPI:
         response_data = response.json()
         return response_data['access_token']
 
-    def get_top_songs_recommendation(self, genre: str) -> dict:
-        assert genre in ['anime', 'j-rock', 'j-pop', 'k-pop']
+    def get_top50_releases(self) -> dict:
         token = self.__auth()
-        api_url = f'https://api.spotify.com/v1/recommendations'
+        api_url = f'https://api.spotify.com/v1/browse/new-releases'
         headers = {'Authorization': f'Bearer {token}'}
-        params = {'seed_genres': genre, 'market': 'BR', 'min_popularity': 40, 'limit': 100}
+        params = {'limit': 50, 'offset': '0'}
         response = requests.get(api_url, headers=headers, params=params)
         return response.json()

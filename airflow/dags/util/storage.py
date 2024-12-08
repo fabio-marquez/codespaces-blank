@@ -22,7 +22,7 @@ class Storage:
         key = parsed_url.path.lstrip('/')
         return bucket, key
 
-    def save_top_songs_recommendation_to_bucket(self, data: dict, path: str):
+    def save_top50_releases_to_bucket(self, data: dict, path: str):
         logging.log(level=logging.INFO, msg='Saving json file to bucket...')
         filename = f'file.json'
         path_with_filename = path + filename

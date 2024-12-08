@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
@@ -7,6 +7,12 @@ from airflow.utils.task_group import TaskGroup
 
 from util.spotify import SpotifyAPI
 from util.storage import Storage
+
+# Get the current date and time
+current_time = datetime.now()
+
+# Format it as yyyy_mm_dd_hh_mm_ss
+formatted_time = current_time.strftime('%Y_%m_%d')
 
 default_args = {
     'owner': 'airflow',
@@ -27,24 +33,15 @@ with DAG(
     tags=['spotify', 'landing'],
 ) as dag:
     with TaskGroup(group_id='spotify_ingestion') as spotify_ingestion:
-        def ingestion(genre: str, s3_path: str):
+
+        def ingestion(s3_path: str):
             api = SpotifyAPI()
-            json_data = api.get_top_songs_recommendation(genre=genre)
+            json_data = api.get_top50_releases()
             storage = Storage()
-            storage.save_top_songs_recommendation_to_bucket(data=json_data, path=s3_path)
+            storage.save_top50_releases_to_bucket(data=json_data, path=s3_path)
 
         PythonOperator(
-            task_id='spotify_jrock_ingestion',
+            task_id='spotify_top50_releases_ingestion',
             python_callable=ingestion,
-            op_kwargs={'genre': 'j-rock', 's3_path': 's3a://landing/spotify_recommend_tracks_jrock/'},
-        )
-        PythonOperator(
-            task_id='spotify_jpop_ingestion',
-            python_callable=ingestion,
-            op_kwargs={'genre': 'j-pop', 's3_path': 's3a://landing/spotify_recommend_tracks_jpop/'},
-        )
-        PythonOperator(
-            task_id='spotify_kpop_ingestion',
-            python_callable=ingestion,
-            op_kwargs={'genre': 'k-pop', 's3_path': 's3a://landing/spotify_recommend_tracks_kpop/'},
+            op_kwargs={'s3_path': f's3a://landing/{formatted_time}/'},
         )
